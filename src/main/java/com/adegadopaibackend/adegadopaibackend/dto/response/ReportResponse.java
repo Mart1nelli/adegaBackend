@@ -1,5 +1,6 @@
 package com.adegadopaibackend.adegadopaibackend.dto.response;
 
+import com.adegadopaibackend.adegadopaibackend.entity.enums.ReportType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -11,7 +12,7 @@ public class ReportResponse {
 
     private String title;
 
-    private String type;
+    private ReportType type;
 
     private String data;
 }

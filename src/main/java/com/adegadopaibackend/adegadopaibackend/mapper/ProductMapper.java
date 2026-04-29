@@ -5,6 +5,8 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateProductRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.ProductResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Product;
 import com.adegadopaibackend.adegadopaibackend.entity.Review;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -26,6 +28,7 @@ public interface ProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(CreateProductRequest request);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "supplier", ignore = true)

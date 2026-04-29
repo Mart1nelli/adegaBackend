@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,12 +21,14 @@ public class AddressController {
     private final AddressService addressService;
 
     @PostMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<AddressResponse> create(@PathVariable Long userId,
                                                   @Valid @RequestBody CreateAddressRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(addressService.create(userId, req));
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<List<AddressResponse>> findAllByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(addressService.findAllByUserId(userId));
     }

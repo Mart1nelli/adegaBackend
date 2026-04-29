@@ -1,5 +1,6 @@
 package com.adegadopaibackend.adegadopaibackend.dto.response;
 
+import com.adegadopaibackend.adegadopaibackend.entity.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,7 +14,7 @@ public class PaymentResponse {
 
     private BigDecimal amount;
 
-    private String status;
+    private PaymentStatus status;
 
     private String transactionId;
 }

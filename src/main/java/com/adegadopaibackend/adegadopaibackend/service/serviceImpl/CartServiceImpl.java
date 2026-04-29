@@ -101,6 +101,10 @@ public class CartServiceImpl implements CartService {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new EntityNotFoundException("Cart item with ID: " + cartItemId + " not found"));
 
+        if (!cartItem.getCart().getUser().getId().equals(userId)) {
+            throw new BusinessException("You are not authorized to remove this cart item");
+        }
+
         Cart cart = cartItem.getCart();
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);

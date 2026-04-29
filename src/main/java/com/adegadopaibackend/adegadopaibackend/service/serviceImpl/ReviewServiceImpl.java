@@ -13,6 +13,9 @@ import com.adegadopaibackend.adegadopaibackend.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 
@@ -24,6 +27,13 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
+
+    private void verifyOwnership(Review review) {
+        User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!loggedUser.getRole().equals("ADMIN") && !review.getUser().getId().equals(loggedUser.getId())) {
+            throw new AccessDeniedException("Access denied: You do not own this review.");
+        }
+    }
 
     @Override
     public ReviewResponse create(Long userId, Long productId, CreateReviewRequest req) {
@@ -55,6 +65,8 @@ public class ReviewServiceImpl implements ReviewService {
     public void delete(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Review with ID: " + id + " not found"));
-        reviewRepository.delete(review);
+        verifyOwnership(review);
+        review.setIsActive(false);
+        reviewRepository.save(review);
     }
 }

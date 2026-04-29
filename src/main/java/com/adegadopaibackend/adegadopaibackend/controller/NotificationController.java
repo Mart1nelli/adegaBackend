@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,12 +20,14 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NotificationResponse> create(@PathVariable Long userId,
                                                        @Valid @RequestBody CreateNotificationRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(notificationService.create(userId, req));
     }
 
     @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<List<NotificationResponse>> findByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.findByUserId(userId));
     }

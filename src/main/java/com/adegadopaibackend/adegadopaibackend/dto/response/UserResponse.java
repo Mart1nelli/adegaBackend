@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import com.adegadopaibackend.adegadopaibackend.entity.enums.UserRole;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +24,7 @@ public class UserResponse {
 
     private String phone;
 
-    private String role;
+    private UserRole role;
 
     private LocalDateTime createdAt;
 

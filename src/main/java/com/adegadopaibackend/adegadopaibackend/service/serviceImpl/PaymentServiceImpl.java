@@ -15,8 +15,11 @@ import com.adegadopaibackend.adegadopaibackend.service.PaymentService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import com.adegadopaibackend.adegadopaibackend.entity.enums.PaymentStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,10 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = orderRepository.findById(req.getOrderId())
                 .orElseThrow(() -> new EntityNotFoundException("Order with ID: " + req.getOrderId() + " not found"));
 
+        if (!order.getUser().getId().equals(userId)) {
+            throw new org.springframework.security.access.AccessDeniedException("Access denied: Order belongs to another user.");
+        }
+
         PaymentMethod method = paymentMethodRepository.findById(req.getPaymentMethodId())
                 .orElseThrow(() -> new EntityNotFoundException("Payment method with ID: " + req.getPaymentMethodId() + " not found"));
 
@@ -44,7 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .order(order)
                 .method(method)
                 .amount(order.getTotalAmount())
-                .status("PENDING")
+                .status(PaymentStatus.PENDING)
                 .build();
 
         Payment savedPayment = paymentRepository.save(payment);

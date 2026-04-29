@@ -41,4 +41,7 @@ public class Review {
     @JoinColumn(name = "productId")
     @JsonBackReference
     private Product product;
+
+    @Builder.Default
+    private Boolean isActive = true;
 }

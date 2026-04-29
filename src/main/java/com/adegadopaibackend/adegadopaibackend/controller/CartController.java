@@ -1,17 +1,28 @@
 package com.adegadopaibackend.adegadopaibackend.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.adegadopaibackend.adegadopaibackend.dto.request.AddToCartRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.CartResponse;
 import com.adegadopaibackend.adegadopaibackend.service.CartService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/carts")
+@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 public class CartController {
 
     private final CartService cartService;

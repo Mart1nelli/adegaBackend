@@ -1,6 +1,7 @@
 package com.adegadopaibackend.adegadopaibackend.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.adegadopaibackend.adegadopaibackend.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +27,8 @@ public class Payment {
     private BigDecimal amount;
 
     @NotNull
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status;
 
     private String transactionId;
 

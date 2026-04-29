@@ -34,6 +34,9 @@ public class Supplier {
 
     private String address;
 
+    @Builder.Default
+    private Boolean isActive = true;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

@@ -10,11 +10,13 @@ import com.adegadopaibackend.adegadopaibackend.service.SupplierService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
@@ -62,6 +64,7 @@ public class SupplierServiceImpl implements SupplierService {
     public void delete(Long id) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Supplier with ID: " + id + " not found"));
-        supplierRepository.delete(supplier);
+        supplier.setIsActive(false);
+        supplierRepository.save(supplier);
     }
 }

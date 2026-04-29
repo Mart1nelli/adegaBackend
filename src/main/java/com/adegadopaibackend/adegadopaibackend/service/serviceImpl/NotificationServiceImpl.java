@@ -11,6 +11,9 @@ import com.adegadopaibackend.adegadopaibackend.service.NotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 
@@ -21,6 +24,13 @@ public class NotificationServiceImpl implements NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final NotificationMapper notificationMapper;
+
+    private void verifyOwnership(Notification notification) {
+        User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (!loggedUser.getRole().equals("ADMIN") && !notification.getUser().getId().equals(loggedUser.getId())) {
+            throw new AccessDeniedException("Access denied: You do not own this notification.");
+        }
+    }
 
     @Override
     public NotificationResponse create(Long userId, CreateNotificationRequest req) {
@@ -47,6 +57,8 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Notification with ID: " + id + " not found"));
 
+        verifyOwnership(notification);
+
         notification.setIsRead(true);
         Notification updated = notificationRepository.save(notification);
         return notificationMapper.toResponse(updated);
@@ -56,6 +68,9 @@ public class NotificationServiceImpl implements NotificationService {
     public void delete(Long id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Notification with ID: " + id + " not found"));
+        
+        verifyOwnership(notification);
+        
         notificationRepository.delete(notification);
     }
 }

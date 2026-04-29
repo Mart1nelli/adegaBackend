@@ -10,11 +10,13 @@ import com.adegadopaibackend.adegadopaibackend.service.CategoryService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CategoryServiceImpl implements CategoryService{
 
     private final CategoryRepository categoryRepository;
@@ -62,6 +64,7 @@ public class CategoryServiceImpl implements CategoryService{
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category  with ID: " + id + " not found"));
-        categoryRepository.delete(category);
+        category.setIsActive(false);
+        categoryRepository.save(category);
     }
 }

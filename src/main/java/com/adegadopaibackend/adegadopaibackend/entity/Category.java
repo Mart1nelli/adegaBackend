@@ -29,6 +29,9 @@ public class Category {
 
     private String description;
 
+    @Builder.Default
+    private Boolean isActive = true;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

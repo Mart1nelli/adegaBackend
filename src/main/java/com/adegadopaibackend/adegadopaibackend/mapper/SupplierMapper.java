@@ -4,6 +4,8 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.CreateSupplierRequest
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateSupplierRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.SupplierResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Supplier;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
@@ -23,6 +25,7 @@ public interface SupplierMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Supplier toEntity(CreateSupplierRequest supplier);
 
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "products", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

@@ -15,11 +15,15 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+
+import com.adegadopaibackend.adegadopaibackend.entity.enums.UserRole;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -62,8 +66,12 @@ public class User implements UserDetails {
 
     private String phone;
 
+    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private String role = "USER";
+    private UserRole role = UserRole.USER;
+
+    @Builder.Default
+    private Boolean isActive = true;
 
     @Min(0)
     @Builder.Default
@@ -121,7 +129,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override

@@ -1,7 +1,9 @@
 package com.adegadopaibackend.adegadopaibackend.entity;
 
+import com.adegadopaibackend.adegadopaibackend.entity.enums.ReportType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -23,8 +25,9 @@ public class Report {
     @NotBlank
     private String title;
 
-    @NotBlank
-    private String type;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private ReportType type;
 
     @Column(columnDefinition = "TEXT")
     private String data;

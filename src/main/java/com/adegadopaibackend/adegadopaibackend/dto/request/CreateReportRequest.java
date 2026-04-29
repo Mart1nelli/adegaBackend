@@ -1,6 +1,8 @@
 package com.adegadopaibackend.adegadopaibackend.dto.request;
 
+import com.adegadopaibackend.adegadopaibackend.entity.enums.ReportType;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +17,8 @@ public class CreateReportRequest {
     @NotBlank
     private String title;
 
-    @NotBlank
-    private String type;
+    @NotNull
+    private ReportType type;
 
     private String data;
 }

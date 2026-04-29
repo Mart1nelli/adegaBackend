@@ -21,6 +21,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
     public ResponseEntity<OrderResponse> create(@PathVariable Long userId,
                                                 @Valid @RequestBody CreateOrderRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(userId, req));
