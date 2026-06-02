@@ -17,4 +17,6 @@ public interface UserService {
     UserResponse update(Long id, UpdateUserRequest req);
 
     void delete(Long id);
+
+    UserResponse getAuthenticatedUser();
 }

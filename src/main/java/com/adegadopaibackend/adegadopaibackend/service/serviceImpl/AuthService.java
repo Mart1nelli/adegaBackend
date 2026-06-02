@@ -4,6 +4,7 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.LoginRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.RegisterRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.AuthResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.User;
+import com.adegadopaibackend.adegadopaibackend.mapper.UserMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserMapper userMapper;
 
     public AuthResponse register(RegisterRequest request) {
         var user = User.builder()
@@ -36,7 +38,7 @@ public class AuthService {
         var accessToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken);
+        return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
     }
 
     public AuthResponse authenticate(LoginRequest request) {
@@ -50,7 +52,7 @@ public class AuthService {
         var accessToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        return new AuthResponse(accessToken, refreshToken);
+        return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
     }
 
     public AuthResponse refreshToken(String refreshToken) {
@@ -63,7 +65,9 @@ public class AuthService {
             if (jwtService.isTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
 
-                return new AuthResponse(accessToken, refreshToken);
+                // No refresh, geralmente não precisamos devolver o usuário,
+                // mas se precisar, basta usar userMapper.toResponse(user) aqui também.
+                return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
             }
         }
         throw new RuntimeException("Refresh Token invalid");

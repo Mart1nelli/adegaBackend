@@ -33,6 +33,12 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findAllByUserId(userId));
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> findAll() {
+        return ResponseEntity.ok(orderService.findAll());
+    }
+
     @GetMapping("/{orderId}")
     @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> findById(

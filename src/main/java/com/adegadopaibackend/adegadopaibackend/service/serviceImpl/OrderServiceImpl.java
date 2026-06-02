@@ -125,6 +125,12 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toResponse(updatedOrder);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<OrderResponse> findAll() {
+        return orderMapper.toResponseList(orderRepository.findAll());
+    }
+
     private void validateStatusTransition(OrderStatus current, OrderStatus next) {
 
         if (current == OrderStatus.CANCELED || current == OrderStatus.DELIVERED) {

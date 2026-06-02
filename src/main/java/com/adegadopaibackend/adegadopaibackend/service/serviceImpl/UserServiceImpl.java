@@ -9,11 +9,13 @@ import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,19 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(req);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public UserResponse getAuthenticatedUser() {
+        // Recupera o nome de usuário (geralmente o e-mail) do contexto de segurança
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+
+        // Busca o usuário pelo e-mail
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        return userMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)

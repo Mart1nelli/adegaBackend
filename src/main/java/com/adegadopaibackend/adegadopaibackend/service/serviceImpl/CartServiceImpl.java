@@ -29,6 +29,7 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public CartResponse getOrCreateCart(Long userId) {
         Cart cart = cartRepository.findTopByUserIdOrderByUpdatedAtDesc(userId)
                 .orElseGet(() -> createCartForUser(userId));

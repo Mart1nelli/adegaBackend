@@ -2,9 +2,11 @@ package com.adegadopaibackend.adegadopaibackend.controller;
 
 import java.util.List;
 
+import com.sun.security.auth.UserPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,6 +41,11 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> findAll() {
         return ResponseEntity.ok(userService.findAll());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getAuthenticatedUser() {
+        return ResponseEntity.ok(userService.getAuthenticatedUser());
     }
 
     @GetMapping("/{id}")
