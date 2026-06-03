@@ -1,19 +1,10 @@
 package com.adegadopaibackend.adegadopaibackend.controller;
 
-
-import java.util.List;
-
+import com.adegadopaibackend.adegadopaibackend.dto.response.PaginatedResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.adegadopaibackend.adegadopaibackend.dto.request.CreateProductRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateProductRequest;
@@ -38,8 +29,12 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> findAll() {
-        return ResponseEntity.ok(productService.findAll());
+    public ResponseEntity<PaginatedResponse<ProductResponse>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        PaginatedResponse<ProductResponse> response = productService.findAll(page, limit);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

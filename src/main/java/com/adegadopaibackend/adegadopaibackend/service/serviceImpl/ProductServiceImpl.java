@@ -2,6 +2,7 @@ package com.adegadopaibackend.adegadopaibackend.service.serviceImpl;
 
 import com.adegadopaibackend.adegadopaibackend.dto.request.CreateProductRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateProductRequest;
+import com.adegadopaibackend.adegadopaibackend.dto.response.PaginatedResponse;
 import com.adegadopaibackend.adegadopaibackend.dto.response.ProductResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Category;
 import com.adegadopaibackend.adegadopaibackend.entity.Product;
@@ -13,6 +14,9 @@ import com.adegadopaibackend.adegadopaibackend.repository.SupplierRepository;
 import com.adegadopaibackend.adegadopaibackend.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,9 +54,19 @@ public class ProductServiceImpl implements ProductService{
 
     @Transactional(readOnly = true)
     @Override
-    public List<ProductResponse> findAll() {
-        List<Product> products = productRepository.findAllWithCategory();
-        return productMapper.toResponseList(products);
+    public PaginatedResponse<ProductResponse> findAll(int page, int limit) {
+        Pageable pageable = PageRequest.of(page, limit);
+        Page<Product> productPage = productRepository.findAll(pageable); // Use o Page do Spring Data
+
+        List<ProductResponse> dtos = productMapper.toResponseList(productPage.getContent());
+
+        return PaginatedResponse.<ProductResponse>builder()
+                .data(dtos)
+                .total(productPage.getTotalElements())
+                .page(page)
+                .limit(limit)
+                .totalPages(productPage.getTotalPages())
+                .build();
     }
 
     @Transactional(readOnly = true)
