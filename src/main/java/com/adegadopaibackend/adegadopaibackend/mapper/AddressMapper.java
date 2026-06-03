@@ -19,8 +19,6 @@ public interface AddressMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "neighborhood", ignore = true)
-    @Mapping(target = "country", ignore = true)
     Address toEntity(CreateAddressRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

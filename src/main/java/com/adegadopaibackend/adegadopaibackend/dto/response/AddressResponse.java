@@ -24,4 +24,8 @@ public class AddressResponse {
     private String zipCode;
 
     private Boolean isDefault;
+
+    private String complement;
+
+    private String neighborhood;
 }
