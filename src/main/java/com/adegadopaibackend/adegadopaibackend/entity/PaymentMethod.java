@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -28,6 +30,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
+@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = "payments")
 @Table(name = "payment_methods")
 public class PaymentMethod {

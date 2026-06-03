@@ -8,6 +8,8 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
@@ -21,6 +23,8 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = {"orderItems", "payments", "orderReviews", "user", "address"})
 @ToString(exclude = {"user", "address", "orderItems", "payments", "orderReviews"}) // CRUCIAL
 @Table(name = "orders")
@@ -38,6 +42,9 @@ public class Order {
 
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @Builder.Default
+    private Boolean isActive = true;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;

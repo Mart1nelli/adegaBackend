@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,8 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 @Builder
+@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = "products")
 @Table(name = "categories")
 public class Category {

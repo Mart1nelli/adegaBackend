@@ -8,6 +8,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -42,6 +44,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = {
         "orders", "carts", "addresses", "reviews",
         "notifications", "payments", "orderReviews"
