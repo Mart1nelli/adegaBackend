@@ -64,6 +64,11 @@ public class CategoryServiceImpl implements CategoryService{
     public void delete(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Category  with ID: " + id + " not found"));
+
+        if (!category.getProducts().isEmpty()) {
+            throw new IllegalStateException("Category already has products");
+        }
+
         category.setIsActive(false);
         categoryRepository.save(category);
     }

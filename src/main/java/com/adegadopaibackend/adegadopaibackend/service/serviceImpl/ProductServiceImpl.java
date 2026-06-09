@@ -56,7 +56,7 @@ public class ProductServiceImpl implements ProductService{
     @Override
     public PaginatedResponse<ProductResponse> findAll(int page, int limit) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<Product> productPage = productRepository.findAll(pageable); // Use o Page do Spring Data
+        Page<Product> productPage = productRepository.findAllWithCategory(pageable); // Use o Page do Spring Data
 
         List<ProductResponse> dtos = productMapper.toResponseList(productPage.getContent());
 
