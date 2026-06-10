@@ -5,13 +5,13 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateProductRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.PaginatedResponse;
 import com.adegadopaibackend.adegadopaibackend.dto.response.ProductResponse;
 
-import java.util.List;
+import java.math.BigDecimal; // IMPORTANTE: Adicione este import
 
 public interface ProductService {
 
     ProductResponse create(CreateProductRequest req);
 
-    PaginatedResponse<ProductResponse> findAll(int page, int limit);
+    PaginatedResponse<ProductResponse> findAll(int page, int limit, Long categoryId, String search, BigDecimal maxPrice);
 
     ProductResponse findById(Long id);
 

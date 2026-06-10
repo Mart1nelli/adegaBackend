@@ -14,6 +14,8 @@ import com.adegadopaibackend.adegadopaibackend.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
@@ -31,9 +33,12 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<PaginatedResponse<ProductResponse>> findAll(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(defaultValue = "12") int limit,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) BigDecimal maxPrice) {
 
-        PaginatedResponse<ProductResponse> response = productService.findAll(page, limit);
+        PaginatedResponse<ProductResponse> response = productService.findAll(page, limit, categoryId, search, maxPrice);
         return ResponseEntity.ok(response);
     }
 

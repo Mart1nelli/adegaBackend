@@ -13,14 +13,19 @@ import com.adegadopaibackend.adegadopaibackend.repository.ProductRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.SupplierRepository;
 import com.adegadopaibackend.adegadopaibackend.service.ProductService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -54,9 +59,30 @@ public class ProductServiceImpl implements ProductService{
 
     @Transactional(readOnly = true)
     @Override
-    public PaginatedResponse<ProductResponse> findAll(int page, int limit) {
+    public PaginatedResponse<ProductResponse> findAll(int page, int limit, Long categoryId, String search, BigDecimal maxPrice) {
         Pageable pageable = PageRequest.of(page, limit);
-        Page<Product> productPage = productRepository.findAllWithCategory(pageable); // Use o Page do Spring Data
+
+        // Criação da Specification dinâmica
+        Specification<Product> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (categoryId != null) {
+                predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+            }
+
+            if (search != null && !search.isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"));
+            }
+
+            if (maxPrice != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        // Busca usando a Specification
+        Page<Product> productPage = productRepository.findAll(spec, pageable);
 
         List<ProductResponse> dtos = productMapper.toResponseList(productPage.getContent());
 
