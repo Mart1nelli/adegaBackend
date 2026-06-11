@@ -5,13 +5,21 @@ import com.adegadopaibackend.adegadopaibackend.dto.response.CartResponse;
 
 public interface CartService {
 
-    CartResponse getOrCreateCart(Long userId);
+    // Métodos para o Usuário (segurança via Token)
+    CartResponse getOrCreateCart();
 
-    CartResponse addItem(Long userId, AddToCartRequest req);
+    CartResponse addItem(AddToCartRequest req);
 
-    CartResponse updateItem(Long userId, Long cartItemId, Integer quantity);
+    CartResponse updateItem(Long cartItemId, Integer quantity);
 
-    CartResponse removeItem(Long userId, Long cartItemId);
+    CartResponse removeItem(Long cartItemId);
 
-    void clearCart(Long userId);
+    void clearCart();
+
+    // Métodos para o Admin (segurança via @PreAuthorize + ID na URL)
+    CartResponse getOrCreateCartForAdmin(Long userId);
+
+    CartResponse addItemForAdmin(Long userId, AddToCartRequest req);
+
+    void clearCartForAdmin(Long userId);
 }

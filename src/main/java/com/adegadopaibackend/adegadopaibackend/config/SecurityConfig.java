@@ -1,5 +1,6 @@
 package com.adegadopaibackend.adegadopaibackend.config;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +39,9 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+                    corsConfiguration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                            .map(String::trim)
+                            .toList());
                     corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     corsConfiguration.setAllowedHeaders(List.of("*"));
                     return corsConfiguration;

@@ -19,28 +19,38 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping("/user/{userId}/product/{productId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<ReviewResponse> create(@PathVariable Long userId,
-                                                 @PathVariable Long productId,
+    // --- Rotas do Usuário ---
+
+    @PostMapping("/product/{productId}")
+    public ResponseEntity<ReviewResponse> create(@PathVariable Long productId,
                                                  @Valid @RequestBody CreateReviewRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(userId, productId, req));
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(productId, req));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<ReviewResponse>> findMyReviews() {
+        return ResponseEntity.ok(reviewService.findMyReviews());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@reviewSecurity.isOwner(#id) or hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        reviewService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- Público ---
 
     @GetMapping("/product/{productId}")
     public ResponseEntity<List<ReviewResponse>> findByProductId(@PathVariable Long productId) {
         return ResponseEntity.ok(reviewService.findByProductId(productId));
     }
 
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    // --- Admin ---
+
+    @GetMapping("/admin/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ReviewResponse>> findByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(reviewService.findByUserId(userId));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        reviewService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

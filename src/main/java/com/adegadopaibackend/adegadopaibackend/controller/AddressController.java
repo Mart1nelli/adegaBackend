@@ -20,33 +20,50 @@ public class AddressController {
 
     private final AddressService addressService;
 
-    @PostMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<AddressResponse> create(@PathVariable Long userId,
-                                                  @Valid @RequestBody CreateAddressRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(addressService.create(userId, req));
+    // --- Rotas do Usuário ---
+
+    @PostMapping
+    public ResponseEntity<AddressResponse> create(@Valid @RequestBody CreateAddressRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(addressService.create(req));
     }
 
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<List<AddressResponse>> findAllByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(addressService.findAllByUserId(userId));
+    @GetMapping
+    public ResponseEntity<List<AddressResponse>> findMyAddresses() {
+        return ResponseEntity.ok(addressService.findMyAddresses());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@addressSecurity.isOwner(#id) or hasRole('ADMIN')")
     public ResponseEntity<AddressResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(addressService.findById(id));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@addressSecurity.isOwner(#id) or hasRole('ADMIN')")
     public ResponseEntity<AddressResponse> update(@PathVariable Long id,
                                                   @Valid @RequestBody UpdateAddressRequest req) {
         return ResponseEntity.ok(addressService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@addressSecurity.isOwner(#id) or hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         addressService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // --- Rotas do Admin ---
+
+    @PostMapping("/admin/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AddressResponse> createForAdmin(@PathVariable Long userId,
+                                                          @Valid @RequestBody CreateAddressRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(addressService.createForAdmin(userId, req));
+    }
+
+    @GetMapping("/admin/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AddressResponse>> findAllByUserId(@PathVariable Long userId) {
+        return ResponseEntity.ok(addressService.findAllByUserId(userId));
     }
 }

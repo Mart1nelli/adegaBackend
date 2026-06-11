@@ -4,6 +4,7 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.LoginRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.RegisterRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.AuthResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.User;
+import com.adegadopaibackend.adegadopaibackend.entity.enums.UserRole;
 import com.adegadopaibackend.adegadopaibackend.mapper.UserMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.security.JwtService;
@@ -13,7 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.adegadopaibackend.adegadopaibackend.entity.enums.UserRole;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +36,8 @@ public class AuthService {
 
         userRepository.save(user);
 
-        var accessToken = jwtService.generateToken(user);
+        // Passando ID e Role para o token
+        var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
         var refreshToken = jwtService.generateRefreshToken(user);
 
         return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
@@ -49,7 +51,8 @@ public class AuthService {
         var user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        var accessToken = jwtService.generateToken(user);
+        // Passando ID e Role para o token
+        var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
         var refreshToken = jwtService.generateRefreshToken(user);
 
         return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
@@ -63,10 +66,8 @@ public class AuthService {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             if (jwtService.isTokenValid(refreshToken, user)) {
-                var accessToken = jwtService.generateToken(user);
-
-                // No refresh, geralmente não precisamos devolver o usuário,
-                // mas se precisar, basta usar userMapper.toResponse(user) aqui também.
+                // Passando ID e Role novamente na renovação
+                var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
                 return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
             }
         }

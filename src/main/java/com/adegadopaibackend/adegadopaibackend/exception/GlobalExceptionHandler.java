@@ -163,6 +163,7 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError> handleBussinessException(BusinessException ex, HttpServletRequest request) {
         return buildError(
                 HttpStatus.UNPROCESSABLE_ENTITY,

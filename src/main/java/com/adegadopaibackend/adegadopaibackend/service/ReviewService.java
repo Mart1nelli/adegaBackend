@@ -7,11 +7,14 @@ import java.util.List;
 
 public interface ReviewService {
 
-    ReviewResponse create(Long userId, Long productId, CreateReviewRequest req);
+    // Rotas do usuário
+    ReviewResponse create(Long productId, CreateReviewRequest req);
+    List<ReviewResponse> findMyReviews();
+    void delete(Long id);
 
+    // Público
     List<ReviewResponse> findByProductId(Long productId);
 
+    // Admin
     List<ReviewResponse> findByUserId(Long userId);
-
-    void delete(Long id);
 }

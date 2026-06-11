@@ -1,6 +1,7 @@
 package com.adegadopaibackend.adegadopaibackend.config;
 
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
+import com.adegadopaibackend.adegadopaibackend.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +23,7 @@ public class ApplicationConfig {
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByEmail(username)
+                .map(user -> new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), user.getAuthorities()))
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado na Adega"));
     }
 

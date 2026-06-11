@@ -12,6 +12,7 @@ import com.adegadopaibackend.adegadopaibackend.repository.CartItemRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.CartRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.ProductRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
+import com.adegadopaibackend.adegadopaibackend.security.SecurityUtils;
 import com.adegadopaibackend.adegadopaibackend.service.CartService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,26 +28,69 @@ public class CartServiceImpl implements CartService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final CartMapper cartMapper;
+    private final SecurityUtils securityUtils;
 
-    @Override
-    @Transactional
-    public CartResponse getOrCreateCart(Long userId) {
+    // --- MÉTODOS PÚBLICOS (Usuário) ---
+    @Override @Transactional
+    public CartResponse getOrCreateCart() {
+        return getOrCreateCartInternal(securityUtils.getAuthenticatedUserId());
+    }
+
+    @Override @Transactional
+    public CartResponse addItem(AddToCartRequest req) {
+        return addItemInternal(securityUtils.getAuthenticatedUserId(), req);
+    }
+
+    @Override @Transactional
+    public CartResponse updateItem(Long cartItemId, Integer quantity) {
+        // A segurança está no Controller via @PreAuthorize
+        return updateItemInternal(cartItemId, quantity);
+    }
+
+    @Override @Transactional
+    public CartResponse removeItem(Long cartItemId) {
+        // A segurança está no Controller via @PreAuthorize
+        return removeItemInternal(cartItemId);
+    }
+
+    @Override @Transactional
+    public void clearCart() {
+        clearCartInternal(securityUtils.getAuthenticatedUserId());
+    }
+
+    // --- MÉTODOS PÚBLICOS (Admin) ---
+    @Override @Transactional
+    public CartResponse getOrCreateCartForAdmin(Long userId) {
+        return getOrCreateCartInternal(userId);
+    }
+
+    @Override @Transactional
+    public CartResponse addItemForAdmin(Long userId, AddToCartRequest req) {
+        return addItemInternal(userId, req);
+    }
+
+    @Override @Transactional
+    public void clearCartForAdmin(Long userId) {
+        clearCartInternal(userId);
+    }
+
+    // --- LÓGICA INTERNA (Focada apenas no Negócio) ---
+
+    private CartResponse getOrCreateCartInternal(Long userId) {
         Cart cart = cartRepository.findTopByUserIdOrderByUpdatedAtDesc(userId)
                 .orElseGet(() -> createCartForUser(userId));
         return cartMapper.toResponse(cart);
     }
 
-    @Override
-    @Transactional
-    public CartResponse addItem(Long userId, AddToCartRequest req) {
+    private CartResponse addItemInternal(Long userId, AddToCartRequest req) {
         Cart cart = cartRepository.findTopByUserIdOrderByUpdatedAtDesc(userId)
                 .orElseGet(() -> createCartForUser(userId));
 
         Product product = productRepository.findById(req.getProductId())
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID: " + req.getProductId() + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
         if (product.getStock() < req.getQuantity()) {
-            throw new BusinessException("Stock is not enough for this product: " + product.getName() + ". Available: " + product.getStock());
+            throw new BusinessException("Stock insufficient");
         }
 
         cart.getCartItems().stream()
@@ -55,68 +99,40 @@ public class CartServiceImpl implements CartService {
                 .ifPresentOrElse(
                         item -> {
                             int newQuantity = item.getQuantity() + req.getQuantity();
-                            if (product.getStock() < newQuantity) {
-                                throw new BusinessException("Insufficient stock. You already have " +
-                                        item.getQuantity() + " In your cart and tried to add more " + req.getQuantity());
-                            }
+                            if (product.getStock() < newQuantity) throw new BusinessException("Insufficient stock.");
                             item.setQuantity(newQuantity);
                         },
                         () -> {
-                            CartItem newItem = CartItem.builder()
-                                    .quantity(req.getQuantity())
-                                    .cart(cart)
-                                    .product(product)
-                                    .build();
+                            CartItem newItem = CartItem.builder().quantity(req.getQuantity()).cart(cart).product(product).build();
                             cart.getCartItems().add(newItem);
                         }
                 );
-
-        Cart savedCart = cartRepository.save(cart);
-        return cartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(cartRepository.save(cart));
     }
 
-    @Override
-    @Transactional
-    public CartResponse updateItem(Long userId, Long cartItemId, Integer quantity) {
+    private CartResponse updateItemInternal(Long cartItemId, Integer quantity) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new EntityNotFoundException("Cart item with ID: " + cartItemId + " not found"));
-
-        if (!cartItem.getCart().getUser().getId().equals(userId)) {
-            throw new BusinessException("You are not authorized to update this cart item");
-        }
+                .orElseThrow(() -> new EntityNotFoundException("Cart item not found"));
 
         if (cartItem.getProduct().getStock() < quantity) {
-            throw new BusinessException("Insufficient stock for this product");
+            throw new BusinessException("Insufficient stock");
         }
 
         cartItem.setQuantity(quantity);
-        cartItemRepository.save(cartItem);
-
-        Cart cart = cartItem.getCart();
-        return cartMapper.toResponse(cart);
+        return cartMapper.toResponse(cartItemRepository.save(cartItem).getCart());
     }
 
-    @Override
-    @Transactional
-    public CartResponse removeItem(Long userId, Long cartItemId) {
+    private CartResponse removeItemInternal(Long cartItemId) {
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new EntityNotFoundException("Cart item with ID: " + cartItemId + " not found"));
-
-        if (!cartItem.getCart().getUser().getId().equals(userId)) {
-            throw new BusinessException("You are not authorized to remove this cart item");
-        }
+                .orElseThrow(() -> new EntityNotFoundException("Cart item not found"));
 
         Cart cart = cartItem.getCart();
         cart.getCartItems().remove(cartItem);
         cartItemRepository.delete(cartItem);
-
-        Cart savedCart = cartRepository.save(cart);
-        return cartMapper.toResponse(savedCart);
+        return cartMapper.toResponse(cartRepository.save(cart));
     }
 
-    @Override
-    @Transactional
-    public void clearCart(Long userId) {
+    private void clearCartInternal(Long userId) {
         cartRepository.findTopByUserIdOrderByUpdatedAtDesc(userId)
                 .ifPresent(cart -> {
                     cart.getCartItems().clear();
@@ -126,8 +142,7 @@ public class CartServiceImpl implements CartService {
 
     private Cart createCartForUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User with ID: " + userId + " not found"));
-        Cart cart = Cart.builder().user(user).build();
-        return cartRepository.save(cart);
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return cartRepository.save(Cart.builder().user(user).build());
     }
 }

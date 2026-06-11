@@ -1,60 +1,85 @@
 package com.adegadopaibackend.adegadopaibackend.controller;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.adegadopaibackend.adegadopaibackend.dto.request.AddToCartRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.CartResponse;
 import com.adegadopaibackend.adegadopaibackend.service.CartService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/carts")
-@PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
 public class CartController {
 
     private final CartService cartService;
 
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<CartResponse> getCart(@PathVariable Long userId) {
-        return ResponseEntity.ok(cartService.getOrCreateCart(userId));
+    @GetMapping
+    public ResponseEntity<CartResponse> getMyCart() {
+        return ResponseEntity.ok(cartService.getOrCreateCart());
     }
 
-    @PostMapping("/user/{userId}/items")
-    public ResponseEntity<CartResponse> addItem(@PathVariable Long userId,
-                                                @Valid @RequestBody AddToCartRequest req) {
-        return ResponseEntity.ok(cartService.addItem(userId, req));
+    @PostMapping("/items")
+    public ResponseEntity<CartResponse> addItem(@Valid @RequestBody AddToCartRequest req) {
+        return ResponseEntity.ok(cartService.addItem(req));
     }
 
-    @PutMapping("/user/{userId}/items/{cartItemId}")
-    public ResponseEntity<CartResponse> updateItem(@PathVariable Long userId,
-                                                   @PathVariable Long cartItemId,
+    @PreAuthorize("@cartSecurity.isOwner(#cartItemId)")
+    @PutMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> updateItem(@PathVariable Long cartItemId,
                                                    @RequestParam Integer quantity) {
-        return ResponseEntity.ok(cartService.updateItem(userId, cartItemId, quantity));
+        return ResponseEntity.ok(cartService.updateItem(cartItemId, quantity));
     }
 
-    @DeleteMapping("/user/{userId}/items/{cartItemId}")
-    public ResponseEntity<CartResponse> removeItem(@PathVariable Long userId,
-                                                   @PathVariable Long cartItemId) {
-        return ResponseEntity.ok(cartService.removeItem(userId, cartItemId));
+    @PreAuthorize("@cartSecurity.isOwner(#cartItemId)")
+    @DeleteMapping("/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItem(@PathVariable Long cartItemId) {
+        return ResponseEntity.ok(cartService.removeItem(cartItemId));
     }
 
-    @DeleteMapping("/user/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable Long userId) {
-        cartService.clearCart(userId);
+    @DeleteMapping
+    public ResponseEntity<Void> clearCart() {
+        cartService.clearCart();
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- MÉTODOS DO ADMIN ---
+    // Rotas protegidas exclusivamente para quem tem a Role ADMIN
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/admin/{userId}")
+    public ResponseEntity<CartResponse> getCartForAdmin(@PathVariable Long userId) {
+        return ResponseEntity.ok(cartService.getOrCreateCartForAdmin(userId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/admin/{userId}/items")
+    public ResponseEntity<CartResponse> addItemAdmin(@PathVariable Long userId,
+                                                     @Valid @RequestBody AddToCartRequest req) {
+        return ResponseEntity.ok(cartService.addItemForAdmin(userId, req));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/admin/{userId}/items/{cartItemId}")
+    public ResponseEntity<CartResponse> updateItemAdmin(@PathVariable Long userId,
+                                                        @PathVariable Long cartItemId,
+                                                        @RequestParam Integer quantity) {
+        return ResponseEntity.ok(cartService.updateItem(cartItemId, quantity));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/{userId}/items/{cartItemId}")
+    public ResponseEntity<CartResponse> removeItemAdmin(@PathVariable Long userId,
+                                                        @PathVariable Long cartItemId) {
+        return ResponseEntity.ok(cartService.removeItem(cartItemId));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/admin/{userId}")
+    public ResponseEntity<Void> clearCartAdmin(@PathVariable Long userId) {
+        cartService.clearCartForAdmin(userId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -9,13 +9,12 @@ import com.adegadopaibackend.adegadopaibackend.mapper.ReviewMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.ProductRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.ReviewRepository;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
+import com.adegadopaibackend.adegadopaibackend.security.SecurityUtils;
 import com.adegadopaibackend.adegadopaibackend.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 
@@ -27,18 +26,15 @@ public class ReviewServiceImpl implements ReviewService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
-
-    private void verifyOwnership(Review review) {
-        User loggedUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!loggedUser.getRole().equals("ADMIN") && !review.getUser().getId().equals(loggedUser.getId())) {
-            throw new AccessDeniedException("Access denied: You do not own this review.");
-        }
-    }
+    private final SecurityUtils securityUtils;
 
     @Override
-    public ReviewResponse create(Long userId, Long productId, CreateReviewRequest req) {
+    @Transactional
+    public ReviewResponse create(Long productId, CreateReviewRequest req) {
+        Long userId = securityUtils.getAuthenticatedUserId();
+
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("User with ID: " + userId + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new EntityNotFoundException("Product with ID: " + productId + " not found"));
@@ -47,26 +43,34 @@ public class ReviewServiceImpl implements ReviewService {
         review.setUser(user);
         review.setProduct(product);
 
-        Review savedReview = reviewRepository.save(review);
-        return reviewMapper.toResponse(savedReview);
+        return reviewMapper.toResponse(reviewRepository.save(review));
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> findMyReviews() {
+        return findByUserId(securityUtils.getAuthenticatedUserId());
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        // A segurança (isOwner ou ADMIN) é garantida pelo @PreAuthorize no Controller
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Review with ID: " + id + " not found"));
+        review.setIsActive(false);
+        reviewRepository.save(review);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ReviewResponse> findByProductId(Long productId) {
         return reviewMapper.toResponseList(reviewRepository.findByProductIdOrderByCreatedAtDesc(productId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewResponse> findByUserId(Long userId) {
         return reviewMapper.toResponseList(reviewRepository.findByUserIdOrderByCreatedAtDesc(userId));
-    }
-
-    @Override
-    public void delete(Long id) {
-        Review review = reviewRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Review with ID: " + id + " not found"));
-        verifyOwnership(review);
-        review.setIsActive(false);
-        reviewRepository.save(review);
     }
 }

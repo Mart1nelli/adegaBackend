@@ -34,12 +34,12 @@ public class CartItem {
     private Integer quantity = 1;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cartId", insertable = false, updatable = false)
+    @JoinColumn(name = "cartId")
     @JsonBackReference
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "productId", insertable = false, updatable = false)
+    @JoinColumn(name = "productId")
     @JsonBackReference
     private Product product;
 }

@@ -20,39 +20,36 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<OrderResponse> create(@PathVariable Long userId,
-                                                @Valid @RequestBody CreateOrderRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(userId, req));
-    }
+    // --- Rotas do Usuário ---
 
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
-    public ResponseEntity<List<OrderResponse>> findAllByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(orderService.findAllByUserId(userId));
+    @PostMapping
+    public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.create(req));
     }
 
     @GetMapping
+    public ResponseEntity<List<OrderResponse>> findMyOrders() {
+        return ResponseEntity.ok(orderService.findMyOrders());
+    }
+
+    @GetMapping("/{orderId}")
+    @PreAuthorize("@orderSecurity.isOwner(#orderId) or hasRole('ADMIN')")
+    public ResponseEntity<OrderResponse> findById(@PathVariable Long orderId) {
+        return ResponseEntity.ok(orderService.findById(orderId));
+    }
+
+    // --- Rotas do Admin ---
+
+    @GetMapping("/admin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderResponse>> findAll() {
         return ResponseEntity.ok(orderService.findAll());
     }
 
-    @GetMapping("/{orderId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> findById(
-            @RequestParam Long userId,
-            @PathVariable Long orderId
-    ) {
-        return ResponseEntity.ok(orderService.findById(userId, orderId));
-    }
-
-    @PutMapping("/{id}/status")
+    @PutMapping("/admin/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponse> updateStatus(
-            @PathVariable Long id,
-            @RequestParam OrderStatus status) {
+    public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long id,
+                                                      @RequestParam OrderStatus status) {
         return ResponseEntity.ok(orderService.updateStatus(id, status));
     }
 }
