@@ -16,7 +16,7 @@ public class CartResponse {
 
     private Long id;
 
-    private List<CartItemResponse> items;
+    private List<CartItemResponse> cartItems;
 
     private LocalDateTime updatedAt;
 }

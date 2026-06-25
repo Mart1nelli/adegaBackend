@@ -1,19 +1,19 @@
 package com.adegadopaibackend.adegadopaibackend.dto.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CartItemResponse {
 
-    private Long productId;
+    private Long id;
 
-    private String productName;
-
-    private Double productPrice;
+    private ProductResponse product;
 
     private Integer quantity;
-
-    private Double total;
 }
