@@ -19,21 +19,28 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    @PostMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<PaymentResponse> create(@PathVariable Long userId,
-                                                  @Valid @RequestBody CreatePaymentRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(userId, req));
+    // --- Rotas do Usuário ---
+
+    @PostMapping
+    public ResponseEntity<PaymentResponse> create(@Valid @RequestBody CreatePaymentRequest req) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.create(req));
     }
 
-    @GetMapping("/order/{orderId}")
+    @GetMapping("/me")
+    public ResponseEntity<List<PaymentResponse>> findMyPayments() {
+        return ResponseEntity.ok(paymentService.findMyPayments());
+    }
+
+    // --- Rotas do Admin ---
+
+    @GetMapping("/admin/order/{orderId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PaymentResponse>> findByOrderId(@PathVariable Long orderId) {
         return ResponseEntity.ok(paymentService.findByOrderId(orderId));
     }
 
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @GetMapping("/admin/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<PaymentResponse>> findByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(paymentService.findByUserId(userId));
     }

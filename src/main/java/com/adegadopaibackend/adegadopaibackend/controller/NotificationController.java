@@ -19,27 +19,38 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    @PostMapping("/user/{userId}")
+    // --- Rotas do Usuário ---
+
+    @GetMapping("/me")
+    public ResponseEntity<List<NotificationResponse>> findMyNotifications() {
+        return ResponseEntity.ok(notificationService.findMyNotifications());
+    }
+
+    @PatchMapping("/{id}/read")
+    @PreAuthorize("@notificationSecurity.isOwner(#id) or hasRole('ADMIN')")
+    public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long id) {
+        return ResponseEntity.ok(notificationService.markAsRead(id));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@notificationSecurity.isOwner(#id) or hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        notificationService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- Rotas do Admin ---
+
+    @PostMapping("/admin/user/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<NotificationResponse> create(@PathVariable Long userId,
                                                        @Valid @RequestBody CreateNotificationRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(notificationService.create(userId, req));
     }
 
-    @GetMapping("/user/{userId}")
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.id")
+    @GetMapping("/admin/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<NotificationResponse>> findByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(notificationService.findByUserId(userId));
-    }
-
-    @PatchMapping("/{id}/read")
-    public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long id) {
-        return ResponseEntity.ok(notificationService.markAsRead(id));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        notificationService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

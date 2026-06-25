@@ -5,6 +5,7 @@ import java.util.List;
 import com.adegadopaibackend.adegadopaibackend.dto.response.CartItemResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.adegadopaibackend.adegadopaibackend.dto.request.CreateCartItemRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateCartItemRequest;
-
 import com.adegadopaibackend.adegadopaibackend.service.CartItemService;
 
 import jakarta.validation.Valid;
@@ -36,21 +36,26 @@ public class CartItemController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<CartItemResponse>> findAll() {
         return ResponseEntity.ok(cartItemService.findAll());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@cartSecurity.isOwner(#id) or hasRole('ADMIN')")
     public ResponseEntity<CartItemResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(cartItemService.findById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CartItemResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateCartItemRequest req) {
+    @PreAuthorize("@cartSecurity.isOwner(#id) or hasRole('ADMIN')")
+    public ResponseEntity<CartItemResponse> update(@PathVariable Long id,
+                                                   @Valid @RequestBody UpdateCartItemRequest req) {
         return ResponseEntity.ok(cartItemService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@cartSecurity.isOwner(#id) or hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         cartItemService.delete(id);
         return ResponseEntity.noContent().build();

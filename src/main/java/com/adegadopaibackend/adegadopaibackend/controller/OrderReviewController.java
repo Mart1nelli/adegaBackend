@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,19 +19,30 @@ public class OrderReviewController {
 
     private final OrderReviewService orderReviewService;
 
-    @PostMapping("/user/{userId}/order/{orderId}")
-    public ResponseEntity<OrderReviewResponse> create(@PathVariable Long userId,
-                                                      @PathVariable Long orderId,
+    // --- Rotas do Usuário ---
+
+    @PostMapping("/order/{orderId}")
+    public ResponseEntity<OrderReviewResponse> create(@PathVariable Long orderId,
                                                       @Valid @RequestBody CreateOrderReviewRequest req) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderReviewService.create(userId, orderId, req));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderReviewService.create(orderId, req));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<List<OrderReviewResponse>> findMyOrderReviews() {
+        return ResponseEntity.ok(orderReviewService.findMyOrderReviews());
+    }
+
+    // --- Público ---
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<List<OrderReviewResponse>> findByOrderId(@PathVariable Long orderId) {
         return ResponseEntity.ok(orderReviewService.findByOrderId(orderId));
     }
 
-    @GetMapping("/user/{userId}")
+    // --- Admin ---
+
+    @GetMapping("/admin/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderReviewResponse>> findByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(orderReviewService.findByUserId(userId));
     }

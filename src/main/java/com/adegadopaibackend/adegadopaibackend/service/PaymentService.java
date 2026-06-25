@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface PaymentService {
 
-    PaymentResponse create(Long userId, CreatePaymentRequest req);
+    // Rotas do Usuário (userId extraído do token)
+    PaymentResponse create(CreatePaymentRequest req);
+    List<PaymentResponse> findMyPayments();
 
+    // Rotas do Admin (userId explícito)
     List<PaymentResponse> findByOrderId(Long orderId);
-
     List<PaymentResponse> findByUserId(Long userId);
 }

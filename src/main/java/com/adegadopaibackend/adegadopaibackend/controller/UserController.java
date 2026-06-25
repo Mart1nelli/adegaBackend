@@ -47,19 +47,20 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
+    @PreAuthorize("@userSecurity.canAccessUser(#id)")
     public ResponseEntity<UserResponse> findById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.findById(id));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
-    public ResponseEntity<UserResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest req) {
+    @PreAuthorize("@userSecurity.canAccessUser(#id)")
+    public ResponseEntity<UserResponse> update(@PathVariable Long id,
+                                               @Valid @RequestBody UpdateUserRequest req) {
         return ResponseEntity.ok(userService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or authentication.principal.id == #id")
+    @PreAuthorize("@userSecurity.canAccessUser(#id)")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();

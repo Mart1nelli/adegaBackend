@@ -7,9 +7,11 @@ import java.util.List;
 
 public interface OrderReviewService {
 
-    OrderReviewResponse create(Long userId, Long orderId, CreateOrderReviewRequest req);
+    // Rotas do Usuário (userId extraído do token)
+    OrderReviewResponse create(Long orderId, CreateOrderReviewRequest req);
+    List<OrderReviewResponse> findMyOrderReviews();
 
+    // Rotas públicas / Admin
     List<OrderReviewResponse> findByOrderId(Long orderId);
-
     List<OrderReviewResponse> findByUserId(Long userId);
 }

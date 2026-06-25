@@ -7,11 +7,14 @@ import java.util.List;
 
 public interface NotificationService {
 
+    // Rotas do Admin (userId explícito)
     NotificationResponse create(Long userId, CreateNotificationRequest req);
-
     List<NotificationResponse> findByUserId(Long userId);
 
-    NotificationResponse markAsRead(Long id);
+    // Rotas do Usuário (userId extraído do token)
+    List<NotificationResponse> findMyNotifications();
 
+    // Shared (proteção por @PreAuthorize no Controller)
+    NotificationResponse markAsRead(Long id);
     void delete(Long id);
 }
