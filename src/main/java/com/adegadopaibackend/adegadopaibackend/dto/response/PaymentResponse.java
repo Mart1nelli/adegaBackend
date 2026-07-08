@@ -17,4 +17,6 @@ public class PaymentResponse {
     private PaymentStatus status;
 
     private String transactionId;
+
+    private String checkoutUrl;
 }
