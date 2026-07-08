@@ -90,14 +90,14 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public List<OrderResponse> findMyOrders() {
         Long userId = securityUtils.getAuthenticatedUserId();
-        return orderMapper.toResponseList(orderRepository.findByUserIdOrderByCreatedAtDesc(userId));
+        return orderMapper.toResponseList(orderRepository.findByUserIdWithItems(userId));
     }
 
     @Override
     @Transactional(readOnly = true)
     public OrderResponse findById(Long orderId) {
         // A segurança (isOwner ou ADMIN) é garantida pelo @PreAuthorize no Controller
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdWithItems(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order with ID: " + orderId + " not found"));
         return orderMapper.toResponse(order);
     }

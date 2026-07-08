@@ -60,7 +60,7 @@ public class Order {
     private Address address;
 
     @Builder.Default
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("id")
     @JsonManagedReference
     private List<OrderItem> orderItems = new ArrayList<>();
