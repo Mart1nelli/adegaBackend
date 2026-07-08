@@ -71,7 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // Converte as Strings de roles para GrantedAuthority
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(SimpleGrantedAuthority::new)
+                            .map(role -> new SimpleGrantedAuthority(role.startsWith("ROLE_") ? role : "ROLE_" + role))
                             .collect(Collectors.toList());
 
                     // 4. Cria o objeto de autenticação já com as autoridades

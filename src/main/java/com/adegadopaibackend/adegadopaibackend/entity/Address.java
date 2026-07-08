@@ -55,7 +55,7 @@ public class Address {
     @NotBlank @Size(min = 2,max = 2)
     private String state;
 
-    @Pattern(regexp = "^[0-9]{5}-[0-9]{3}$")
+    @Pattern(regexp = "^[0-9]{5}-?[0-9]{3}$", message = "Formato de CEP inválido")
     private String zipCode;
 
     private String country;

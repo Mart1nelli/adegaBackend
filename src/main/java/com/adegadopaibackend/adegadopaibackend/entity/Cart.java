@@ -35,6 +35,7 @@ public class Cart {
     @JsonBackReference
     private User user;
 
+    @Builder.Default
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id")
     @JsonManagedReference

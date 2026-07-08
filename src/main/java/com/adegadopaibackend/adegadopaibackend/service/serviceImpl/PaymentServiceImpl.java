@@ -21,8 +21,11 @@ import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
+import com.mercadopago.client.preference.PreferencePayerRequest;
 import com.mercadopago.resources.preference.Preference;
 import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.exceptions.MPApiException;
+import com.mercadopago.exceptions.MPException;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -95,7 +98,6 @@ public class PaymentServiceImpl implements PaymentService {
             PreferenceRequest preferenceRequest = PreferenceRequest.builder()
                     .items(items)
                     .backUrls(backUrls)
-                    .autoReturn("approved")
                     .externalReference(payment.getId().toString())
                     .notificationUrl("https://grinning-bribe-unwired.ngrok-free.dev/api/v1/payments/webhook")
                     .build();
@@ -111,6 +113,9 @@ public class PaymentServiceImpl implements PaymentService {
             response.setCheckoutUrl(preference.getSandboxInitPoint()); // Use getInitPoint() em produção
             return response;
 
+        } catch (MPApiException e) {
+            System.err.println("MercadoPago API Error: " + e.getApiResponse().getContent());
+            throw new BusinessException("Falha na API do Mercado Pago: " + e.getApiResponse().getContent());
         } catch (Exception e) {
             throw new BusinessException("Falha ao se comunicar com o gateway de pagamento: " + e.getMessage());
         }
@@ -155,13 +160,16 @@ public class PaymentServiceImpl implements PaymentService {
                         localPayment.setStatus(PaymentStatus.FAILED);
 
                         // NOTA DE NEGÓCIO: Geralmente mantemos o pedido como PENDING para o cliente
-                        // tentar pagar de novo. Se preferir cancelar direto o pedido e devolver o estoque,
+                        // tentar pagar de novo. Se preferir cancelar direto o pedido e devolver o
+                        // estoque,
                         // descomente as linhas abaixo:
                         // order.setStatus(OrderStatus.CANCELED);
-                        // para devolver o estoque aqui, precisaríamos expor a lógica ou usar o orderRepository
+                        // para devolver o estoque aqui, precisaríamos expor a lógica ou usar o
+                        // orderRepository
                     }
 
-                    paymentRepository.save(localPayment); // O Hibernate cuida de salvar a order alterada por cascateamento/dirty checking
+                    paymentRepository.save(localPayment); // O Hibernate cuida de salvar a order alterada por
+                                                          // cascateamento/dirty checking
                 }
             }
         } catch (Exception e) {

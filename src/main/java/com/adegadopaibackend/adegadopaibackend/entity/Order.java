@@ -59,15 +59,18 @@ public class Order {
     @JsonBackReference
     private Address address;
 
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @OrderBy("id")
     @JsonManagedReference
     private List<OrderItem> orderItems = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<Payment> payments = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     @JsonManagedReference
     private List<OrderReview> orderReviews = new ArrayList<>();

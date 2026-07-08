@@ -47,6 +47,7 @@ public class Supplier {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     @OrderBy("name")
     @JsonManagedReference
