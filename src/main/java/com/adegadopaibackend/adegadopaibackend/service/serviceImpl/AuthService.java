@@ -5,10 +5,12 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.RegisterRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.AuthResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.User;
 import com.adegadopaibackend.adegadopaibackend.entity.enums.UserRole;
+import com.adegadopaibackend.adegadopaibackend.exception.ConflictException;
 import com.adegadopaibackend.adegadopaibackend.mapper.UserMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,31 +29,37 @@ public class AuthService {
     private final UserMapper userMapper;
 
     public AuthResponse register(RegisterRequest request) {
+        String email = normalizeEmail(request.email());
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ConflictException("Email already exists");
+        }
+
         var user = User.builder()
                 .name(request.name())
-                .email(request.email())
+                .email(email)
                 .password(passwordEncoder.encode(request.password()))
                 .role(UserRole.USER)
                 .build();
 
-        userRepository.save(user);
+        var savedUser = userRepository.save(user);
 
-        // Passando ID e Role para o token
-        var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
-        var refreshToken = jwtService.generateRefreshToken(user);
+        var accessToken = jwtService.generateToken(savedUser, savedUser.getId(), List.of(savedUser.getRole().name()));
+        var refreshToken = jwtService.generateRefreshToken(savedUser);
 
-        return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
+        return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(savedUser));
     }
 
     public AuthResponse authenticate(LoginRequest request) {
+        String email = normalizeEmail(request.email());
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password())
+                new UsernamePasswordAuthenticationToken(email, request.password())
         );
 
-        var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadCredentialsException("Credenciais inválidas"));
 
-        // Passando ID e Role para o token
         var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
         var refreshToken = jwtService.generateRefreshToken(user);
 
@@ -59,18 +67,21 @@ public class AuthService {
     }
 
     public AuthResponse refreshToken(String refreshToken) {
-        final String userEmail = jwtService.extractUsername(refreshToken);
+        final String userEmail = normalizeEmail(jwtService.extractUsername(refreshToken));
 
         if (userEmail != null) {
             var user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new BadCredentialsException("Refresh token inválido"));
 
             if (jwtService.isTokenValid(refreshToken, user)) {
-                // Passando ID e Role novamente na renovação
                 var accessToken = jwtService.generateToken(user, user.getId(), List.of(user.getRole().name()));
                 return new AuthResponse(accessToken, refreshToken, userMapper.toResponse(user));
             }
         }
-        throw new RuntimeException("Refresh Token invalid");
+        throw new BadCredentialsException("Refresh token inválido");
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim();
     }
 }

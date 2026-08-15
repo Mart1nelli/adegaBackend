@@ -23,7 +23,7 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLDelete(sql = "UPDATE orders SET is_active = false WHERE id = ?")
 @SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = {"orderItems", "payments", "orderReviews", "user", "address"})
 @ToString(exclude = {"user", "address", "orderItems", "payments", "orderReviews"}) // CRUCIAL
@@ -75,4 +75,3 @@ public class Order {
     @JsonManagedReference
     private List<OrderReview> orderReviews = new ArrayList<>();
 }
-

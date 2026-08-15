@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Builder
-@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLDelete(sql = "UPDATE suppliers SET is_active = false WHERE id = ?")
 @SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = "products")
 @Table(name = "suppliers")

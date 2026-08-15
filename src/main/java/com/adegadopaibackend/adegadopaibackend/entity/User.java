@@ -44,7 +44,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLDelete(sql = "UPDATE users SET is_active = false WHERE id = ?")
 @SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = {
         "orders", "carts", "addresses", "reviews",

@@ -32,28 +32,33 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.findMyPayments());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PaymentResponse> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(paymentService.findById(id));
+    }
+
+    @GetMapping("/order/{orderId}")
+    public ResponseEntity<List<PaymentResponse>> findByOrderId(@PathVariable Long orderId) {
+        return ResponseEntity.ok(paymentService.findByOrderId(orderId));
+    }
+
+    @PostMapping("/{id}/sync")
+    public ResponseEntity<PaymentResponse> syncPaymentStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(paymentService.syncPaymentStatus(id));
+    }
+
     // --- Rota Pública do Webhook do Mercado Pago ---
 
     @PostMapping("/webhook")
     public ResponseEntity<Void> receberWebhook(
-            @RequestParam(value = "data.id", required = false) Long dataId,
-            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(required = false) Map<String, String> queryParams,
             @RequestBody(required = false) Map<String, Object> payload) {
 
-        // Encaminha a notificação direto para o service processar a aprovação
-        paymentService.processarNotificacaoWebhook(dataId, type, payload);
-
-        // Retorna 200 OK exigido pelo Mercado Pago
+        paymentService.processarNotificacaoWebhook(queryParams, payload);
         return ResponseEntity.ok().build();
     }
 
     // --- Rotas do Admin ---
-
-    @GetMapping("/admin/order/{orderId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<PaymentResponse>> findByOrderId(@PathVariable Long orderId) {
-        return ResponseEntity.ok(paymentService.findByOrderId(orderId));
-    }
 
     @GetMapping("/admin/user/{userId}")
     @PreAuthorize("hasRole('ADMIN')")

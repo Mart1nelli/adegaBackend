@@ -13,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 @RequiredArgsConstructor
@@ -22,7 +23,7 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
+        return username -> userRepository.findByEmail(username == null ? null : username.trim())
                 .map(user -> new UserPrincipal(user.getId(), user.getEmail(), user.getPassword(), user.getAuthorities()))
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado na Adega"));
     }
@@ -33,7 +34,6 @@ public class ApplicationConfig {
             PasswordEncoder passwordEncoder) {
 
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-
         authProvider.setPasswordEncoder(passwordEncoder);
 
         return authProvider;
@@ -47,5 +47,10 @@ public class ApplicationConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
     }
 }

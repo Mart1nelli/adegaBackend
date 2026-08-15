@@ -4,6 +4,7 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.CreateCategoryRequest
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateCategoryRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.CategoryResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Category;
+import com.adegadopaibackend.adegadopaibackend.exception.ConflictException;
 import com.adegadopaibackend.adegadopaibackend.mapper.CategoryMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.CategoryRepository;
 import com.adegadopaibackend.adegadopaibackend.service.CategoryService;
@@ -26,7 +27,7 @@ public class CategoryServiceImpl implements CategoryService{
     public CategoryResponse create(CreateCategoryRequest req) {
 
         if (categoryRepository.existsByName(req.getName())) {
-            throw new IllegalArgumentException("Category already exists");
+            throw new ConflictException("Category already exists");
         }
 
         Category category = categoryMapper.toEntity(req);
@@ -52,7 +53,7 @@ public class CategoryServiceImpl implements CategoryService{
                 .orElseThrow(() -> new EntityNotFoundException("Category  with ID: " + id + " not found"));
 
         if (categoryRepository.existsByNameAndIdNot(req.getName(), id)) {
-            throw new IllegalArgumentException("Category already exists");
+            throw new ConflictException("Category already exists");
         }
 
         categoryMapper.updateEntity(req, category);
@@ -66,7 +67,7 @@ public class CategoryServiceImpl implements CategoryService{
                 .orElseThrow(() -> new EntityNotFoundException("Category  with ID: " + id + " not found"));
 
         if (!category.getProducts().isEmpty()) {
-            throw new IllegalStateException("Category already has products");
+            throw new ConflictException("Category already has products");
         }
 
         category.setIsActive(false);

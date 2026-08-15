@@ -28,12 +28,12 @@ public class OrderItem {
     private BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orderId", insertable = false, updatable = false)
+    @JoinColumn(name = "orderId")
     @JsonBackReference
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "productId", insertable = false, updatable = false)
+    @JoinColumn(name = "productId")
     @JsonBackReference
     private Product product;
 }

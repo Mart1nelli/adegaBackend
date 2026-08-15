@@ -4,6 +4,7 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.CreateSupplierRequest
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateSupplierRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.SupplierResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Supplier;
+import com.adegadopaibackend.adegadopaibackend.exception.ConflictException;
 import com.adegadopaibackend.adegadopaibackend.mapper.SupplierMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.SupplierRepository;
 import com.adegadopaibackend.adegadopaibackend.service.SupplierService;
@@ -26,7 +27,7 @@ public class SupplierServiceImpl implements SupplierService {
     public SupplierResponse create (CreateSupplierRequest req) {
 
         if(supplierRepository.existsByName(req.getName())) {
-            throw new IllegalArgumentException("Supplier already exists");
+            throw new ConflictException("Supplier already exists");
         }
 
         Supplier supplier = supplierMapper.toEntity(req);
@@ -52,7 +53,7 @@ public class SupplierServiceImpl implements SupplierService {
                 .orElseThrow(() -> new EntityNotFoundException("Supplier with ID: " + id + " not found"));
 
         if (supplierRepository.existsByNameAndIdNot(req.getName(), id)) {
-            throw new IllegalArgumentException("Supplier already exists");
+            throw new ConflictException("Supplier already exists");
         }
 
         supplierMapper.updateEntity(req, supplier);

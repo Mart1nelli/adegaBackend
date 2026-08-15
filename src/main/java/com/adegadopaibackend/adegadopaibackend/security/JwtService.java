@@ -3,6 +3,7 @@ package com.adegadopaibackend.adegadopaibackend.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -24,21 +25,27 @@ public class JwtService {
     private static final long ACCESS_TOKEN_EXPIRATION = 1000 * 60 * 15; // 15 minutos
     private static final long REFRESH_TOKEN_EXPIRATION = 1000 * 60 * 60 * 24 * 7; // 7 dias
 
+    @PostConstruct
+    void validateSecretKey() {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException("JWT secret key must be configured");
+        }
 
-    /**
-     * Gera um token com informações extras (userId e roles).
-     * Ideal para otimizar consultas ao banco no backend.
-     */
-    public String generateToken(UserDetails userDetails, Long userId, List<String> roles) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
-        claims.put("roles", roles);
-        return buildToken(claims, userDetails, ACCESS_TOKEN_EXPIRATION);
+        if (secretKey.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret key must be at least 32 bytes");
+        }
     }
 
-    // Sobrecarga para quando não precisar de claims extras
+
+    public String generateToken(UserDetails userDetails, Long userId, List<String> roles) {
+       Map<String, Object> claims = new HashMap<>();
+       claims.put("userId", userId);
+       claims.put("roles", roles);
+       return buildToken(claims, userDetails, ACCESS_TOKEN_EXPIRATION);
+    }
+
     public String generateToken(UserDetails userDetails) {
-        return buildToken(new HashMap<>(), userDetails, ACCESS_TOKEN_EXPIRATION);
+       return buildToken(new HashMap<>(), userDetails, ACCESS_TOKEN_EXPIRATION);
     }
 
     public String generateRefreshToken(UserDetails userDetails) {
@@ -55,19 +62,15 @@ public class JwtService {
                 .compact();
     }
 
-    // --- MÉTODOS DE EXTRAÇÃO (OTIMIZADOS) ---
-
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extrai qualquer dado (ex: roles ou userId) usando uma função lambda
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Faz o parse do token UMA VEZ só, melhorando a performance drasticamente
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSignInKey())
@@ -76,11 +79,9 @@ public class JwtService {
                 .getPayload();
     }
 
-    // --- MÉTODOS DE VALIDAÇÃO ---
-
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        return username != null && username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

@@ -1,5 +1,6 @@
 package com.adegadopaibackend.adegadopaibackend.exception;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -8,6 +9,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -15,7 +19,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-//import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -172,6 +176,30 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<ApiError> handlePaymentGatewayException(
+            PaymentGatewayException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.BAD_GATEWAY,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiError> handleConflict(
+            ConflictException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handleIllegalArgument(
             IllegalArgumentException ex,
@@ -184,23 +212,48 @@ public class GlobalExceptionHandler {
         );
     }
 
-//    @ExceptionHandler(AccessDeniedException.class)
-//    public ResponseEntity<ApiError> handleAccessDenied(
-//            AccessDeniedException ex,
-//            HttpServletRequest request
-//    ) {
-//        return buildError(
-//                HttpStatus.FORBIDDEN,
-//                "Access denied",
-//                request.getRequestURI()
-//        );
-//    }
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthenticationException(
+            AuthenticationException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                "Credenciais inválidas ou expiradas",
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiError> handleJwtException(
+            JwtException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.UNAUTHORIZED,
+                "Token inválido ou expirado",
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request
+    ) {
+        return buildError(
+                HttpStatus.FORBIDDEN,
+                "Access denied",
+                request.getRequestURI()
+        );
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(
             Exception ex,
             HttpServletRequest request
     ) {
+        log.error("Unexpected internal server error at {} {}", request.getMethod(), request.getRequestURI(), ex);
         return buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Unexpected internal server error",

@@ -11,6 +11,8 @@ import java.util.List;
 public interface PaymentMapper {
 
     @Mapping(target = "checkoutUrl", ignore = true)
+    @Mapping(target = "orderId", source = "order.id")
+    @Mapping(target = "paymentMethodId", source = "method.id")
     PaymentResponse toResponse(Payment payment);
 
     List<PaymentResponse> toResponseList(List<Payment> payments);

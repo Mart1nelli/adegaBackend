@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-@SQLDelete(sql = "UPDATE products SET is_active = false WHERE id = ?")
+@SQLDelete(sql = "UPDATE payment_methods SET is_active = false WHERE id = ?")
 @SQLRestriction("is_active = true")
 @EqualsAndHashCode(exclude = "payments")
 @Table(name = "payment_methods")

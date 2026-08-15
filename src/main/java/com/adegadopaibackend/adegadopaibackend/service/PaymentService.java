@@ -10,12 +10,14 @@ public interface PaymentService {
 
     // Rotas do Usuário (userId extraído do token)
     PaymentResponse create(CreatePaymentRequest req);
+    PaymentResponse findById(Long id);
     List<PaymentResponse> findMyPayments();
+    List<PaymentResponse> findByOrderId(Long orderId);
+    PaymentResponse syncPaymentStatus(Long id);
 
     // Rota do Webhook (Mercado Pago)
-    void processarNotificacaoWebhook(Long dataId, String type, Map<String, Object> payload);
+    void processarNotificacaoWebhook(Map<String, String> queryParams, Map<String, Object> payload);
 
     // Rotas do Admin (userId explícito)
-    List<PaymentResponse> findByOrderId(Long orderId);
     List<PaymentResponse> findByUserId(Long userId);
 }

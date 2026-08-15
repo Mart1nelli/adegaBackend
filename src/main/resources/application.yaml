@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:./.env[.properties]
   application:
     name: AdegaDoPaiBackend
 
@@ -30,8 +32,12 @@ spring:
 
 # Configuração do Mercado Pago adicionada aqui na raiz
 mercadopago:
-  access:
-    token: ${MERCADOPAGO_ACCESS_TOKEN:TEST-COLE_AQUI_O_SEU_ACCESS_TOKEN_DE_TESTE}
+  access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
+  webhook-url: ${MERCADOPAGO_WEBHOOK_URL:http://localhost:8080/api/v1/payments/webhook}
+  frontend-success-url: ${MERCADOPAGO_FRONTEND_SUCCESS_URL:http://localhost:4200/checkout/sucesso}
+  frontend-failure-url: ${MERCADOPAGO_FRONTEND_FAILURE_URL:http://localhost:4200/checkout/falha}
+  frontend-pending-url: ${MERCADOPAGO_FRONTEND_PENDING_URL:http://localhost:4200/checkout/pendente}
+  use-sandbox-checkout-url: ${MERCADOPAGO_USE_SANDBOX_CHECKOUT_URL:true}
 
 api:
   cors:
@@ -40,8 +46,15 @@ api:
 security:
   jwt:
     secret-key: ${JWT_SECRET_KEY:}
+  rate-limit:
+    auth:
+      max-requests: ${AUTH_RATE_LIMIT_MAX_REQUESTS:10}
+      window-ms: ${AUTH_RATE_LIMIT_WINDOW_MS:60000}
+    api:
+      max-requests: ${API_RATE_LIMIT_MAX_REQUESTS:120}
+      window-ms: ${API_RATE_LIMIT_WINDOW_MS:60000}
 
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.SQL: ${HIBERNATE_SQL_LOG_LEVEL:OFF}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${HIBERNATE_SQL_BINDER_LOG_LEVEL:OFF}

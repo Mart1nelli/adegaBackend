@@ -4,6 +4,7 @@ import com.adegadopaibackend.adegadopaibackend.dto.request.CreateUserRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.request.UpdateUserRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.UserResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.User;
+import com.adegadopaibackend.adegadopaibackend.exception.ConflictException;
 import com.adegadopaibackend.adegadopaibackend.mapper.UserMapper;
 import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.security.SecurityUtils;
@@ -28,11 +29,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse create(CreateUserRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("Email already exists.");
+        String email = normalizeEmail(req.getEmail());
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ConflictException("Email already exists");
         }
 
         User user = userMapper.toEntity(req);
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -40,7 +44,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     @Override
     public UserResponse getAuthenticatedUser() {
-        String email = securityUtils.getAuthenticatedUser().email();
+        String email = normalizeEmail(securityUtils.getAuthenticatedUser().email());
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
@@ -82,5 +86,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new EntityNotFoundException("User with ID: " + id + " not found"));
         user.setIsActive(false);
         userRepository.save(user);
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? null : email.trim();
     }
 }
