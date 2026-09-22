@@ -33,4 +33,6 @@ public class CreateTransparentPaymentRequest {
     private String issuerId;
 
     private String payerEmail;
+        private String payerIdentificationType;
+        private String payerIdentificationNumber;
 }

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import com.adegadopaibackend.adegadopaibackend.repository.UserRepository;
 import com.adegadopaibackend.adegadopaibackend.security.SecurityUtils;
 import com.adegadopaibackend.adegadopaibackend.service.PaymentService;
 import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.common.IdentificationRequest;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.payment.PaymentCreateRequest;
 import com.mercadopago.client.payment.PaymentPayerRequest;
@@ -40,6 +42,7 @@ import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
 import com.mercadopago.client.preference.PreferencePayerRequest;
 import com.mercadopago.client.preference.PreferenceRequest;
+import com.mercadopago.core.MPRequestOptions;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.net.MPSearchRequest;
@@ -211,11 +214,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .build());
 
         try {
-            PaymentCreateRequest.PaymentCreateRequestBuilder requestBuilder = PaymentCreateRequest.builder()
+                Integer installments = req.getInstallments() != null ? req.getInstallments() : Integer.valueOf(1);
+                PaymentCreateRequest.PaymentCreateRequestBuilder requestBuilder = PaymentCreateRequest.builder()
                     .transactionAmount(order.getTotalAmount())
                     .description("Pedido #" + order.getId() + " - Adega do Pai")
                     .paymentMethodId(req.getMercadoPagoPaymentMethodId().trim())
-                    .installments(req.getInstallments() == null ? 1 : req.getInstallments())
+                    .installments(installments)
                     .externalReference(payment.getId().toString());
 
             if (isPublicWebhookUrl(mercadoPagoProperties.webhookUrl())) {
@@ -225,16 +229,28 @@ public class PaymentServiceImpl implements PaymentService {
             if (hasText(req.getToken())) {
                 requestBuilder.token(req.getToken().trim());
             }
-            if (hasText(req.getIssuerId())) {
+            if (installments > 1 && hasText(req.getIssuerId())) {
                 requestBuilder.issuerId(req.getIssuerId().trim());
             }
 
             String payerEmail = hasText(req.getPayerEmail()) ? req.getPayerEmail().trim() : user.getEmail();
+            PaymentPayerRequest.PaymentPayerRequestBuilder payerBuilder = PaymentPayerRequest.builder();
             if (hasText(payerEmail)) {
-                requestBuilder.payer(PaymentPayerRequest.builder().email(payerEmail.trim()).build());
+                payerBuilder.email(payerEmail.trim());
             }
+            if (hasText(req.getPayerIdentificationType()) && hasText(req.getPayerIdentificationNumber())) {
+                payerBuilder.identification(IdentificationRequest.builder()
+                        .type(req.getPayerIdentificationType().trim())
+                        .number(req.getPayerIdentificationNumber().replaceAll("\\D", ""))
+                        .build());
+            }
+            requestBuilder.payer(payerBuilder.build());
 
-            com.mercadopago.resources.payment.Payment mpPayment = new PaymentClient().create(requestBuilder.build());
+            MPRequestOptions requestOptions = MPRequestOptions.builder()
+                    .customHeaders(Map.of("X-Idempotency-Key", UUID.randomUUID().toString()))
+                    .build();
+            com.mercadopago.resources.payment.Payment mpPayment = new PaymentClient()
+                    .create(requestBuilder.build(), requestOptions);
             if (mpPayment == null || mpPayment.getId() == null) {
                 throw new PaymentGatewayException("O Mercado Pago não retornou um pagamento válido.");
             }
