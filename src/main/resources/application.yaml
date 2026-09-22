@@ -58,3 +58,12 @@ logging:
   level:
     org.hibernate.SQL: ${HIBERNATE_SQL_LOG_LEVEL:OFF}
     org.hibernate.type.descriptor.sql.BasicBinder: ${HIBERNATE_SQL_BINDER_LOG_LEVEL:OFF}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never

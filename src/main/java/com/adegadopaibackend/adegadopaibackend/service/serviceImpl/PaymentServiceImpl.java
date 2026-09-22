@@ -239,6 +239,8 @@ public class PaymentServiceImpl implements PaymentService {
                 throw new PaymentGatewayException("O Mercado Pago não retornou um pagamento válido.");
             }
 
+            log.info("Pagamento transparente criado. Pagamento local {}, pedido {}, MP {}, status {}",
+                    payment.getId(), order.getId(), mpPayment.getId(), mpPayment.getStatus());
             syncLocalPaymentWithGateway(payment, mpPayment);
             return paymentMapper.toResponse(payment);
         } catch (MPApiException ex) {
