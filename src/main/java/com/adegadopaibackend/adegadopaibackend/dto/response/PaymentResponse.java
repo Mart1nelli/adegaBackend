@@ -1,13 +1,14 @@
 package com.adegadopaibackend.adegadopaibackend.dto.response;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import com.adegadopaibackend.adegadopaibackend.entity.enums.PaymentStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -24,6 +25,8 @@ public class PaymentResponse {
     private String transactionId;
 
     private Long orderId;
+
+    private Long userId;
 
     private Long paymentMethodId;
 

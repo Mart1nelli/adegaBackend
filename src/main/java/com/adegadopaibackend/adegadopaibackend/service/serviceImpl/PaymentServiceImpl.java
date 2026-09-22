@@ -1,7 +1,17 @@
 package com.adegadopaibackend.adegadopaibackend.service.serviceImpl;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.adegadopaibackend.adegadopaibackend.config.MercadoPagoProperties;
 import com.adegadopaibackend.adegadopaibackend.dto.request.CreatePaymentRequest;
+import com.adegadopaibackend.adegadopaibackend.dto.request.CreateTransparentPaymentRequest;
 import com.adegadopaibackend.adegadopaibackend.dto.response.PaymentResponse;
 import com.adegadopaibackend.adegadopaibackend.entity.Order;
 import com.adegadopaibackend.adegadopaibackend.entity.OrderItem;
@@ -23,6 +33,8 @@ import com.adegadopaibackend.adegadopaibackend.security.SecurityUtils;
 import com.adegadopaibackend.adegadopaibackend.service.PaymentService;
 import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
+import com.mercadopago.client.payment.PaymentCreateRequest;
+import com.mercadopago.client.payment.PaymentPayerRequest;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
 import com.mercadopago.client.preference.PreferenceItemRequest;
@@ -32,17 +44,10 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.net.MPSearchRequest;
 import com.mercadopago.resources.preference.Preference;
+
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -176,6 +181,91 @@ public class PaymentServiceImpl implements PaymentService {
         } catch (MPException ex) {
             log.error("Erro no SDK do Mercado Pago ao criar checkout para pedido {}", order.getId(), ex);
             throw new PaymentGatewayException("Erro ao comunicar com o Mercado Pago: " + ex.getMessage(), ex);
+        }
+    }
+
+    @Override
+    @Transactional
+    public PaymentResponse createTransparent(CreateTransparentPaymentRequest req) {
+        Long userId = securityUtils.getAuthenticatedUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User with ID: " + userId + " not found"));
+        Order order = orderRepository.findById(req.getOrderId())
+                .orElseThrow(() -> new EntityNotFoundException("Order with ID: " + req.getOrderId() + " not found"));
+
+        validateOrderForPayment(order, userId);
+        PaymentMethod method = paymentMethodRepository.findById(req.getPaymentMethodId())
+                .orElseThrow(() -> new EntityNotFoundException("Payment method not found"));
+
+        if (!hasText(mercadoPagoProperties.accessToken())) {
+            throw new PaymentGatewayException("Token de acesso do Mercado Pago não configurado.");
+        }
+
+        MercadoPagoConfig.setAccessToken(mercadoPagoProperties.accessToken().trim());
+        Payment payment = paymentRepository.save(Payment.builder()
+                .user(user)
+                .order(order)
+                .method(method)
+                .amount(order.getTotalAmount())
+                .status(PaymentStatus.PENDING)
+                .build());
+
+        try {
+            PaymentCreateRequest.PaymentCreateRequestBuilder requestBuilder = PaymentCreateRequest.builder()
+                    .transactionAmount(order.getTotalAmount())
+                    .description("Pedido #" + order.getId() + " - Adega do Pai")
+                    .paymentMethodId(req.getMercadoPagoPaymentMethodId().trim())
+                    .installments(req.getInstallments() == null ? 1 : req.getInstallments())
+                    .externalReference(payment.getId().toString());
+
+            if (isPublicWebhookUrl(mercadoPagoProperties.webhookUrl())) {
+                requestBuilder.notificationUrl(mercadoPagoProperties.webhookUrl().trim());
+            }
+
+            if (hasText(req.getToken())) {
+                requestBuilder.token(req.getToken().trim());
+            }
+            if (hasText(req.getIssuerId())) {
+                requestBuilder.issuerId(req.getIssuerId().trim());
+            }
+
+            String payerEmail = hasText(req.getPayerEmail()) ? req.getPayerEmail().trim() : user.getEmail();
+            if (hasText(payerEmail)) {
+                requestBuilder.payer(PaymentPayerRequest.builder().email(payerEmail.trim()).build());
+            }
+
+            com.mercadopago.resources.payment.Payment mpPayment = new PaymentClient().create(requestBuilder.build());
+            if (mpPayment == null || mpPayment.getId() == null) {
+                throw new PaymentGatewayException("O Mercado Pago não retornou um pagamento válido.");
+            }
+
+            syncLocalPaymentWithGateway(payment, mpPayment);
+            return paymentMapper.toResponse(payment);
+        } catch (MPApiException ex) {
+            String responseBody = ex.getApiResponse() != null ? ex.getApiResponse().getContent() : "Sem detalhes";
+            log.error("Falha ao criar pagamento transparente para pedido {}. HTTP {}: {}", order.getId(), ex.getStatusCode(), responseBody, ex);
+            throw new PaymentGatewayException("Falha ao criar pagamento no Mercado Pago: " + responseBody, ex);
+        } catch (MPException ex) {
+            log.error("Erro no SDK do Mercado Pago ao criar pagamento transparente para pedido {}", order.getId(), ex);
+            throw new PaymentGatewayException("Erro ao comunicar com o Mercado Pago: " + ex.getMessage(), ex);
+        }
+    }
+
+    private void validateOrderForPayment(Order order, Long userId) {
+        if (!order.getUser().getId().equals(userId)) {
+            throw new BusinessException("Este pedido não pertence ao usuário logado.");
+        }
+        if (order.getStatus() == OrderStatus.PAID) {
+            throw new BusinessException("Este pedido já foi pago.");
+        }
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            throw new BusinessException("Não é possível realizar pagamento para um pedido cancelado.");
+        }
+        if (order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new BusinessException("Este pedido já foi finalizado.");
+        }
+        if (order.getTotalAmount() == null || order.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("O valor do pedido deve ser maior que zero.");
         }
     }
 
