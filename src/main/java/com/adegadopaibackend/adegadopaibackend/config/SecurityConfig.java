@@ -41,7 +41,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfiguration = new CorsConfiguration();
-                    corsConfiguration.setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
+                    corsConfiguration.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
                             .map(String::trim)
                             .filter(origin -> !origin.isBlank())
                             .toList());
