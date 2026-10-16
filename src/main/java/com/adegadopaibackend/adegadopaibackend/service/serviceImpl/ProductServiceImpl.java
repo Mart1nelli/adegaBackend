@@ -70,8 +70,9 @@ public class ProductServiceImpl implements ProductService{
                 predicates.add(cb.equal(root.get("category").get("id"), categoryId));
             }
 
-            if (search != null && !search.isEmpty()) {
-                predicates.add(cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%"));
+            if (search != null && !search.isBlank()) {
+                String normalizedSearch = search.trim().toLowerCase();
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + normalizedSearch + "%"));
             }
 
             if (maxPrice != null) {

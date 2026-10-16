@@ -38,7 +38,10 @@ public class ProductController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) BigDecimal maxPrice) {
 
-        PaginatedResponse<ProductResponse> response = productService.findAll(page, limit, categoryId, search, maxPrice);
+        int safePage = Math.max(page, 0);
+        int safeLimit = Math.min(Math.max(limit, 1), 50);
+        PaginatedResponse<ProductResponse> response =
+                productService.findAll(safePage, safeLimit, categoryId, search, maxPrice);
         return ResponseEntity.ok(response);
     }
 

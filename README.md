@@ -61,6 +61,7 @@ O schema é gerenciado pelo Flyway:
 
 - `V1__create_schema.sql` cria as tabelas, relacionamentos, constraints e índices.
 - `V2__seed_catalog.sql` insere categorias, métodos de pagamento, fornecedor e produtos de demonstração.
+- `V3__seed_additional_catalog.sql` corrige a imagem da IPA e adiciona mais 20 produtos fictícios.
 - O Hibernate usa `ddl-auto=validate` por padrão e não altera o banco.
 
 Em um banco vazio, as migrations são executadas automaticamente na inicialização. Para
